@@ -24,34 +24,35 @@ body{font-family:'Inter',sans-serif;background:#fff;color:#0f1e17;overflow-x:hid
   .hero-section{padding:120px 24px 80px!important}
   .sp-hero{padding:160px 24px 80px!important}
   .sp-section{padding:80px 24px!important}
-  .sp-nav-grid{grid-template-columns:1fr!important}
 }
 input,textarea,button,select{font-family:'Inter',sans-serif}
 a{text-decoration:none}
 .dd-link:hover{background:rgba(15,190,106,0.06)!important}
-.card-wrap:hover .card-title{color:#0d9e5c}
+.card-wrap{transition:all 0.3s}
 .nav-btn:hover{color:#0b1f2e!important}
 .footer-link:hover{color:rgba(255,255,255,0.7)!important}
 .cta-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
 .cta-primary{transition:all 0.2s}
 .prev-next:hover{border-color:#b6e8cc!important;background:#f0faf4!important}
+.tab-btn{transition:all 0.2s}
+.tab-btn:hover{border-color:#0b1f2e!important}
 </style>
 </head>
 <body>
 
 <!-- NAVBAR -->
-<div id="navbar-container" style="position:fixed;top:16px;left:0;right:0;z-index:9000;display:flex;justify-content:center;padding:0 16px">
+<div style="position:fixed;top:16px;left:0;right:0;z-index:9000;display:flex;justify-content:center;padding:0 16px">
 <nav id="main-nav" style="display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;width:100%;max-width:1200px;background:rgba(255,255,255,0.85);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);border:1px solid rgba(0,0,0,0.08);border-radius:100px;box-shadow:0 4px 24px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);transition:all 0.4s;overflow:visible;position:relative">
-  <a href="#/" onclick="navigateTo('/');return false" style="font-size:0.9rem;font-weight:800;letter-spacing:-0.4px;color:#0b1f2e;text-decoration:none;cursor:pointer;white-space:nowrap;flex-shrink:0">Emmy<span style="color:#0fbe6a">Health</span></a>
+  <a href="#/" onclick="navigateTo('/');return false" style="font-size:0.9rem;font-weight:800;letter-spacing:-0.4px;color:#0b1f2e;cursor:pointer;white-space:nowrap;flex-shrink:0">Emmy<span style="color:#0fbe6a">Health</span></a>
   <ul class="nav-desktop" id="nav-links" style="display:flex;gap:4px;list-style:none;margin:0;padding:0;align-items:center"></ul>
   <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
-    <a href="#contact" onclick="smoothTo('contact');return false" class="cta-primary" style="background:#0fbe6a;color:#000;padding:8px 18px;border-radius:100px;font-weight:700;font-size:0.72rem;text-decoration:none;cursor:pointer;white-space:nowrap">Book Consultation</a>
+    <a href="#contact" onclick="smoothTo('contact');return false" class="cta-primary" style="background:#0fbe6a;color:#000;padding:8px 18px;border-radius:100px;font-weight:700;font-size:0.72rem;cursor:pointer;white-space:nowrap">Book Consultation</a>
   </div>
   <div id="dropdown-panel" style="display:none;position:absolute;top:calc(100% + 10px);left:0;right:0;background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.1);border:1px solid rgba(0,0,0,0.06);padding:28px 36px;z-index:600"></div>
 </nav>
 </div>
 
-<!-- APP CONTENT -->
+<!-- APP -->
 <div id="app"></div>
 
 <script>
@@ -84,98 +85,112 @@ const tabs=[{key:"all",label:"All"},{key:"hormones",label:"Hormones & Longevity"
 const catMap={"hormone-optimization":["all","hormones"],"iv-biohacking":["all","biohacking"],"medical-spa":["all","aesthetics"],"wellness-recovery":["all","recovery"],"chiropractic-pt":["all","physio"]};
 
 // ═══════════ STATE ═══════════
-let currentPath=window.location.hash.slice(1)||"/";
-let activeTab="all";
-let openCard=null;
-let activeDD=null;
-let ddTimeout=null;
-let formSubmitted=false;
+let currentPath = window.location.hash.slice(1) || "/";
+let activeTab = "all";
+let openCard = null;
+let activeDD = null;
+let ddTimeout = null;
+let formSubmitted = false;
 
 // ═══════════ ROUTING ═══════════
-function navigateTo(to){window.location.hash=to;window.scrollTo(0,0)}
-window.addEventListener("hashchange",()=>{currentPath=window.location.hash.slice(1)||"/";openCard=null;formSubmitted=false;render()});
+function navigateTo(to){ window.location.hash = to; window.scrollTo(0, 0); }
+
+window.addEventListener("hashchange", () => {
+  currentPath = window.location.hash.slice(1) || "/";
+  openCard = null;
+  formSubmitted = false;
+  activeTab = "all";
+  renderPage();
+});
 
 function smoothTo(id){
-  const isHome=currentPath==="/";
-  if(!isHome){navigateTo("/");setTimeout(()=>{const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth"})},200)}
-  else{const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth"})}
+  if (currentPath !== "/") {
+    navigateTo("/");
+    setTimeout(() => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: "smooth" }); }, 250);
+  } else {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  }
 }
 
 // ═══════════ NAVBAR SCROLL ═══════════
-window.addEventListener("scroll",()=>{
-  const nav=document.getElementById("main-nav");
-  if(!nav)return;
-  const s=window.scrollY>50;
-  nav.style.background=s?"rgba(255,255,255,0.95)":"rgba(255,255,255,0.85)";
-  nav.style.border=s?"1px solid rgba(0,0,0,0.1)":"1px solid rgba(0,0,0,0.08)";
-  nav.style.boxShadow=s?"0 8px 32px rgba(0,0,0,0.12),0 1px 3px rgba(0,0,0,0.08)":"0 4px 24px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)";
-},{passive:true});
+window.addEventListener("scroll", () => {
+  const nav = document.getElementById("main-nav");
+  if (!nav) return;
+  const s = window.scrollY > 50;
+  nav.style.background = s ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.85)";
+  nav.style.border = s ? "1px solid rgba(0,0,0,0.1)" : "1px solid rgba(0,0,0,0.08)";
+  nav.style.boxShadow = s ? "0 8px 32px rgba(0,0,0,0.12),0 1px 3px rgba(0,0,0,0.08)" : "0 4px 24px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)";
+}, { passive: true });
 
 // ═══════════ NAVBAR DROPDOWN ═══════════
 function buildNavLinks(){
-  const ul=document.getElementById("nav-links");
-  if(!ul)return;
-  ul.innerHTML="";
-  navCategories.forEach((cat,idx)=>{
-    const li=document.createElement("li");
-    li.style.cssText="position:relative;display:flex;align-items:center";
-    li.addEventListener("mouseenter",()=>{clearTimeout(ddTimeout);showDD(idx)});
-    li.addEventListener("mouseleave",()=>{ddTimeout=setTimeout(()=>hideDD(),200)});
-    const btn=document.createElement("button");
-    btn.className="nav-btn";
-    btn.textContent=cat.label;
-    btn.style.cssText="color:rgba(11,31,46,0.55);background:none;border:none;font-size:0.72rem;font-weight:600;cursor:pointer;padding:6px 10px;border-radius:8px;font-family:'Inter',sans-serif;white-space:nowrap;transition:color 0.2s";
-    btn.onclick=()=>{activeDD===idx?hideDD():showDD(idx)};
+  const ul = document.getElementById("nav-links");
+  if (!ul) return;
+  ul.innerHTML = "";
+  navCategories.forEach((cat, idx) => {
+    const li = document.createElement("li");
+    li.style.cssText = "position:relative;display:flex;align-items:center";
+    li.addEventListener("mouseenter", () => { clearTimeout(ddTimeout); showDD(idx); });
+    li.addEventListener("mouseleave", () => { ddTimeout = setTimeout(() => hideDD(), 200); });
+    const btn = document.createElement("button");
+    btn.className = "nav-btn";
+    btn.textContent = cat.label;
+    btn.style.cssText = "color:rgba(11,31,46,0.55);background:none;border:none;font-size:0.72rem;font-weight:600;cursor:pointer;padding:6px 10px;border-radius:8px;font-family:'Inter',sans-serif;white-space:nowrap;transition:color 0.2s";
+    btn.onclick = () => { activeDD === idx ? hideDD() : showDD(idx); };
     li.appendChild(btn);
     ul.appendChild(li);
   });
 }
 
 function showDD(idx){
-  activeDD=idx;
-  const panel=document.getElementById("dropdown-panel");
-  const cat=navCategories[idx];
-  panel.style.display="block";
-  panel.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;max-width:560px" class="grid-2">${cat.columns.map(col=>`
+  activeDD = idx;
+  const panel = document.getElementById("dropdown-panel");
+  const cat = navCategories[idx];
+  panel.style.display = "block";
+  panel.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;max-width:560px" class="grid-2">${cat.columns.map(col => `
     <div>
       <div style="font-size:0.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#0d9e5c;margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid #e8f5ee">${col.title}</div>
       <div style="display:flex;flex-direction:column;gap:2px">
-        ${col.links.map(link=>`<button class="dd-link" onclick="navigateTo('/services/${link.slug}');hideDD()" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;border-radius:10px;cursor:pointer;text-align:left;font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:500;color:rgba(11,31,46,0.65);transition:background 0.15s"><span style="width:5px;height:5px;border-radius:50%;background:rgba(15,190,106,0.4);flex-shrink:0"></span>${link.label}</button>`).join("")}
+        ${col.links.map(link => `<button class="dd-link" onclick="navigateTo('/services/${link.slug}');hideDD()" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;border-radius:10px;cursor:pointer;text-align:left;font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:500;color:rgba(11,31,46,0.65);transition:background 0.15s"><span style="width:5px;height:5px;border-radius:50%;background:rgba(15,190,106,0.4);flex-shrink:0"></span>${link.label}</button>`).join("")}
       </div>
     </div>`).join("")}</div>`;
-  panel.addEventListener("mouseenter",()=>clearTimeout(ddTimeout));
-  panel.addEventListener("mouseleave",()=>{ddTimeout=setTimeout(()=>hideDD(),200)});
-  document.querySelectorAll("#nav-links .nav-btn").forEach((b,i)=>{b.style.color=i===idx?"#0b1f2e":"rgba(11,31,46,0.55)"});
+  panel.addEventListener("mouseenter", () => clearTimeout(ddTimeout));
+  panel.addEventListener("mouseleave", () => { ddTimeout = setTimeout(() => hideDD(), 200); });
+  document.querySelectorAll("#nav-links .nav-btn").forEach((b, i) => { b.style.color = i === idx ? "#0b1f2e" : "rgba(11,31,46,0.55)"; });
 }
 
 function hideDD(){
-  activeDD=null;
-  const panel=document.getElementById("dropdown-panel");
-  if(panel)panel.style.display="none";
-  document.querySelectorAll("#nav-links .nav-btn").forEach(b=>{b.style.color="rgba(11,31,46,0.55)"});
+  activeDD = null;
+  const panel = document.getElementById("dropdown-panel");
+  if (panel) panel.style.display = "none";
+  document.querySelectorAll("#nav-links .nav-btn").forEach(b => { b.style.color = "rgba(11,31,46,0.55)"; });
 }
 
-// ═══════════ SVG ICON HELPER ═══════════
-function sIcon(i){return `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#0d9e5c;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round">${svgIconPaths[i]}</svg>`}
+// ═══════════ HELPERS ═══════════
+function sIcon(i){ return `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#0d9e5c;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round">${svgIconPaths[i]}</svg>`; }
+function arrowRight(size,sw){ return `<svg viewBox="0 0 24 24" style="width:${size}px;height:${size}px;stroke:currentColor;fill:none;stroke-width:${sw||2};stroke-linecap:round;stroke-linejoin:round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`; }
+function arrowLeft(size){ return `<svg viewBox="0 0 24 24" style="width:${size}px;height:${size}px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`; }
+function chevronRight(size){ return `<svg viewBox="0 0 24 24" style="width:${size}px;height:${size}px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="9 18 15 12 9 6"/></svg>`; }
+function checkIcon(size){ return `<svg viewBox="0 0 24 24" style="width:${size}px;height:${size}px;stroke:#0d9e5c;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>`; }
 
-// ═══════════ RENDER ═══════════
-function render(){
-  const app=document.getElementById("app");
-  if(currentPath.startsWith("/services/")){
-    const slug=currentPath.replace("/services/","");
-    const svc=servicePages.find(s=>s.slug===slug);
-    if(svc)app.innerHTML=renderServicePage(svc);
-    else app.innerHTML=`<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px"><h1 style="font-size:2rem;font-weight:800">Service Not Found</h1><button onclick="navigateTo('/')" class="cta-primary" style="background:#0fbe6a;color:#000;padding:12px 28px;border-radius:100px;font-weight:700;border:none;cursor:pointer">Back to Home</button></div>`;
+// ═══════════ RENDER: FULL PAGE (only on route change) ═══════════
+function renderPage(){
+  const app = document.getElementById("app");
+  if (currentPath.startsWith("/services/")) {
+    const slug = currentPath.replace("/services/", "");
+    const svc = servicePages.find(s => s.slug === slug);
+    if (svc) app.innerHTML = renderServicePage(svc);
+    else app.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px"><h1 style="font-size:2rem;font-weight:800">Service Not Found</h1><button onclick="navigateTo('/')" class="cta-primary" style="background:#0fbe6a;color:#000;padding:12px 28px;border-radius:100px;font-weight:700;border:none;cursor:pointer">Back to Home</button></div>`;
   } else {
-    app.innerHTML=renderHome();
+    app.innerHTML = renderHome();
   }
   buildNavLinks();
-  if(currentPath==="/")initMarquee();
 }
 
 // ═══════════ HOME ═══════════
 function renderHome(){
-  return renderHero()+renderTrustBar()+renderServices()+renderContact()+renderFooter();
+  return renderHero() + renderTrustBar() + renderServicesSection() + renderContact() + renderFooter();
 }
 
 function renderHero(){
@@ -215,96 +230,96 @@ function renderTrustBar(){
   </div>`;
 }
 
-function initMarquee(){
-  const track=document.querySelector(".marquee-track");
-  if(track)track.style.animation="marquee 50s linear infinite";
-}
-
-function renderServices(){
-  const filtered=servicePages.filter(s=>(catMap[s.id]||[]).includes(activeTab));
+// ═══════════ SERVICES — wrapper + inner content ═══════════
+function renderServicesSection(){
   return `<section id="services" class="sec-pad" style="background:#fff;padding:110px 60px">
     <div style="text-align:center;margin-bottom:52px">
       <span style="font-size:0.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#0d9e5c;margin-bottom:10px;display:block">What We Offer</span>
       <h2 style="font-size:clamp(2rem,3.5vw,3rem);font-weight:900;letter-spacing:-1.5px;color:#0b1f2e;margin-bottom:10px">Comprehensive Health Services</h2>
       <p style="color:#5a7a68;font-size:0.93rem;line-height:1.75;max-width:460px;margin:0 auto">Click any card to explore the full program — built on structured protocols, objective data, and ongoing care.</p>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:48px">
-      ${tabs.map(tab=>`<button onclick="setTab('${tab.key}')" style="background:${activeTab===tab.key?"#0b1f2e":"#fff"};border:${activeTab===tab.key?"1.5px solid #0b1f2e":"1.5px solid #ddeee5"};color:${activeTab===tab.key?"#fff":"#5a7a68"};padding:7px 18px;border-radius:100px;font-size:0.74rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">${tab.label}</button>`).join("")}
+    <div id="services-tabs" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:48px">
+      ${renderTabs()}
     </div>
-    <div style="display:flex;flex-direction:column;gap:14px">
-      ${filtered.map((card,ci)=>{
-        const isOpen=openCard===card.id;
-        const origIdx=servicePages.indexOf(card);
-        return `<div class="card-wrap" onclick="toggleCard('${card.id}')" style="background:#fff;border:${isOpen?"1.5px solid #0d9e5c":"1.5px solid #ddeee5"};border-radius:20px;overflow:hidden;cursor:pointer;box-shadow:${isOpen?"0 12px 48px rgba(13,158,92,.14)":"none"};transition:all 0.3s">
-          <div style="padding:22px 20px 18px;display:flex;align-items:flex-start;gap:14px">
-            <div style="width:42px;height:42px;flex-shrink:0;background:#e6f7ee;border-radius:12px;display:flex;align-items:center;justify-content:center">${sIcon(origIdx)}</div>
-            <div style="flex:1">
-              <h3 class="card-title" style="font-size:0.9rem;font-weight:700;color:#0b1f2e;letter-spacing:-0.3px;margin-bottom:3px;line-height:1.3;transition:color 0.2s">${card.title}</h3>
-              <p style="font-size:0.75rem;color:#5a7a68;line-height:1.5">${card.subtitle}</p>
-            </div>
-            <div style="width:28px;height:28px;flex-shrink:0;margin-top:2px;border:${isOpen?"1.5px solid #0d9e5c":"1.5px solid #ddeee5"};border-radius:50%;display:flex;align-items:center;justify-content:center;background:${isOpen?"#e6f7ee":"transparent"};transition:all 0.3s">
-              <svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:${isOpen?"#0d9e5c":"#99baaa"};fill:none;stroke-width:2.5;stroke-linecap:round;transform:${isOpen?"rotate(180deg)":"rotate(0deg)"};transition:transform 0.3s"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
-          ${isOpen?`<div style="border-top:1.5px solid #ddeee5;padding:18px 20px 22px">
-            <div style="background:#e6f7ee;border-left:3px solid #0d9e5c;border-radius:0 10px 10px 0;padding:11px 14px;margin-bottom:16px">
-              <div style="font-size:0.63rem;font-weight:700;color:#0d9e5c;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:3px">Goal</div>
-              <p style="font-size:0.79rem;color:#0f1e17;line-height:1.6">${card.goal}</p>
-            </div>
-            ${card.sections.map(section=>`<div style="margin-bottom:12px">
-              <h4 style="font-size:0.67rem;font-weight:700;color:#0b1f2e;letter-spacing:0.3px;text-transform:uppercase;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid #ddeee5">${section.title}</h4>
-              <ul style="list-style:none;display:flex;flex-direction:column;gap:4px;padding:0;margin:0">
-                ${section.items.map(item=>`<li style="font-size:0.79rem;color:#5a7a68;line-height:1.55;padding-left:13px;position:relative"><span style="position:absolute;left:0;top:7px;width:4px;height:4px;background:#0d9e5c;border-radius:50%;opacity:0.75"></span>${item}</li>`).join("")}
-              </ul>
-            </div>`).join("")}
-            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:14px;padding-top:12px;border-top:1px solid #ddeee5">
-              ${card.pills.map(p=>`<span style="background:rgba(255,255,255,0.45);color:#0d9e5c;border:1px solid rgba(182,232,204,0.6);padding:3px 10px;border-radius:100px;font-size:0.64rem;font-weight:600">${p}</span>`).join("")}
-            </div>
-            <div style="margin-top:18px">
-              <a href="#/services/${card.slug}" onclick="event.stopPropagation();navigateTo('/services/${card.slug}');return false" class="cta-primary" style="display:inline-flex;align-items:center;gap:8px;background:#0fbe6a;color:#000;padding:11px 20px;border-radius:100px;font-size:0.8rem;font-weight:700;border:1.5px solid #0fbe6a;box-shadow:0 4px 16px rgba(15,190,106,0.25)">Explore Program <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
-            </div>
-          </div>`:""}
-        </div>`;
-      }).join("")}
+    <div id="services-cards" style="display:flex;flex-direction:column;gap:14px">
+      ${renderCards()}
     </div>
   </section>`;
 }
 
-function renderContact(){
-  if(formSubmitted){
-    return `<section id="contact" class="sec-pad" style="background:linear-gradient(160deg,#f0faf4 0%,#e4f5ec 100%);padding:110px 60px">
-      <div style="display:grid;grid-template-columns:1fr 1.1fr;gap:80px;align-items:start" class="grid-contact">
-        ${contactLeftCol()}
-        <div style="background:rgba(255,255,255,0.85);border:1.5px solid rgba(200,235,215,.8);border-radius:24px;padding:60px;text-align:center;backdrop-filter:blur(16px)">
-          <div style="width:64px;height:64px;background:#e6f7ee;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
-            <svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#0d9e5c;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <h3 style="font-size:1.3rem;font-weight:800;color:#0b1f2e;margin-bottom:8px">Message Sent!</h3>
-          <p style="color:#5a7a68;font-size:0.9rem">Thank you! Our team will get back to you shortly.</p>
+function renderTabs(){
+  return tabs.map(tab =>
+    `<button class="tab-btn" onclick="setTab('${tab.key}')" style="background:${activeTab===tab.key?"#0b1f2e":"#fff"};border:${activeTab===tab.key?"1.5px solid #0b1f2e":"1.5px solid #ddeee5"};color:${activeTab===tab.key?"#fff":"#5a7a68"};padding:7px 18px;border-radius:100px;font-size:0.74rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">${tab.label}</button>`
+  ).join("");
+}
+
+function renderCards(){
+  const filtered = servicePages.filter(s => (catMap[s.id]||[]).includes(activeTab));
+  return filtered.map(card => {
+    const isOpen = openCard === card.id;
+    const origIdx = servicePages.indexOf(card);
+    return `<div class="card-wrap" onclick="toggleCard('${card.id}')" style="background:#fff;border:${isOpen?"1.5px solid #0d9e5c":"1.5px solid #ddeee5"};border-radius:20px;overflow:hidden;cursor:pointer;box-shadow:${isOpen?"0 12px 48px rgba(13,158,92,.14)":"none"}">
+      <div style="padding:22px 20px 18px;display:flex;align-items:flex-start;gap:14px">
+        <div style="width:42px;height:42px;flex-shrink:0;background:#e6f7ee;border-radius:12px;display:flex;align-items:center;justify-content:center">${sIcon(origIdx)}</div>
+        <div style="flex:1">
+          <h3 style="font-size:0.9rem;font-weight:700;color:#0b1f2e;letter-spacing:-0.3px;margin-bottom:3px;line-height:1.3">${card.title}</h3>
+          <p style="font-size:0.75rem;color:#5a7a68;line-height:1.5">${card.subtitle}</p>
+        </div>
+        <div style="width:28px;height:28px;flex-shrink:0;margin-top:2px;border:${isOpen?"1.5px solid #0d9e5c":"1.5px solid #ddeee5"};border-radius:50%;display:flex;align-items:center;justify-content:center;background:${isOpen?"#e6f7ee":"transparent"};transition:all 0.3s">
+          <svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:${isOpen?"#0d9e5c":"#99baaa"};fill:none;stroke-width:2.5;stroke-linecap:round;transform:${isOpen?"rotate(180deg)":"rotate(0deg)"};transition:transform 0.3s"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
-    </section>`;
-  }
+      ${isOpen ? renderCardExpanded(card) : ""}
+    </div>`;
+  }).join("");
+}
+
+function renderCardExpanded(card){
+  return `<div style="border-top:1.5px solid #ddeee5;padding:18px 20px 22px">
+    <div style="background:#e6f7ee;border-left:3px solid #0d9e5c;border-radius:0 10px 10px 0;padding:11px 14px;margin-bottom:16px">
+      <div style="font-size:0.63rem;font-weight:700;color:#0d9e5c;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:3px">Goal</div>
+      <p style="font-size:0.79rem;color:#0f1e17;line-height:1.6">${card.goal}</p>
+    </div>
+    ${card.sections.map(section => `<div style="margin-bottom:12px">
+      <h4 style="font-size:0.67rem;font-weight:700;color:#0b1f2e;letter-spacing:0.3px;text-transform:uppercase;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid #ddeee5">${section.title}</h4>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:4px;padding:0;margin:0">
+        ${section.items.map(item => `<li style="font-size:0.79rem;color:#5a7a68;line-height:1.55;padding-left:13px;position:relative"><span style="position:absolute;left:0;top:7px;width:4px;height:4px;background:#0d9e5c;border-radius:50%;opacity:0.75"></span>${item}</li>`).join("")}
+      </ul>
+    </div>`).join("")}
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:14px;padding-top:12px;border-top:1px solid #ddeee5">
+      ${card.pills.map(p => `<span style="background:rgba(255,255,255,0.45);color:#0d9e5c;border:1px solid rgba(182,232,204,0.6);padding:3px 10px;border-radius:100px;font-size:0.64rem;font-weight:600">${p}</span>`).join("")}
+    </div>
+    <div style="margin-top:18px">
+      <a href="#/services/${card.slug}" onclick="event.stopPropagation();navigateTo('/services/${card.slug}');return false" class="cta-primary" style="display:inline-flex;align-items:center;gap:8px;background:#0fbe6a;color:#000;padding:11px 20px;border-radius:100px;font-size:0.8rem;font-weight:700;border:1.5px solid #0fbe6a;box-shadow:0 4px 16px rgba(15,190,106,0.25)">Explore Program ${arrowRight(16,2.5)}</a>
+    </div>
+  </div>`;
+}
+
+// ═══════════ SERVICES ACTIONS — only update tabs + cards ═══════════
+function setTab(key){
+  activeTab = key;
+  openCard = null;
+  updateServicesUI();
+}
+
+function toggleCard(id){
+  openCard = openCard === id ? null : id;
+  updateServicesUI();
+}
+
+function updateServicesUI(){
+  const tabsEl = document.getElementById("services-tabs");
+  const cardsEl = document.getElementById("services-cards");
+  if (tabsEl) tabsEl.innerHTML = renderTabs();
+  if (cardsEl) cardsEl.innerHTML = renderCards();
+}
+
+// ═══════════ CONTACT ═══════════
+function renderContact(){
   return `<section id="contact" class="sec-pad" style="background:linear-gradient(160deg,#f0faf4 0%,#e4f5ec 100%);padding:110px 60px">
     <div style="display:grid;grid-template-columns:1fr 1.1fr;gap:80px;align-items:start" class="grid-contact">
       ${contactLeftCol()}
-      <div style="background:rgba(255,255,255,0.85);border:1.5px solid rgba(200,235,215,.8);border-radius:24px;padding:34px;display:flex;flex-direction:column;gap:13px;backdrop-filter:blur(16px);box-shadow:0 8px 40px rgba(13,158,92,.08)">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" class="grid-2">
-          ${["First Name","Last Name"].map(l=>`<div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:0.66rem;font-weight:700;color:#5a7a68;letter-spacing:0.4px;text-transform:uppercase">${l}</label>
-            <input placeholder="${l==="First Name"?"John":"Doe"}" style="background-color:rgba(255,255,255,0.8);border:1.5px solid #ddeee5;border-radius:10px;padding:11px 13px;color:#0b1f2e;font-size:0.84rem;font-family:'Inter',sans-serif;outline:none;width:100%"/>
-          </div>`).join("")}
-        </div>
-        ${["Email","Phone"].map(l=>`<div style="display:flex;flex-direction:column;gap:5px">
-          <label style="font-size:0.66rem;font-weight:700;color:#5a7a68;letter-spacing:0.4px;text-transform:uppercase">${l}</label>
-          <input placeholder="${l==="Email"?"john@email.com":"+1 (000) 000-0000"}" style="background-color:rgba(255,255,255,0.8);border:1.5px solid #ddeee5;border-radius:10px;padding:11px 13px;color:#0b1f2e;font-size:0.84rem;font-family:'Inter',sans-serif;outline:none;width:100%"/>
-        </div>`).join("")}
-        <div style="display:flex;flex-direction:column;gap:5px">
-          <label style="font-size:0.66rem;font-weight:700;color:#5a7a68;letter-spacing:0.4px;text-transform:uppercase">Message</label>
-          <textarea placeholder="Tell us about your health goals..." style="background-color:rgba(255,255,255,0.8);border:1.5px solid #ddeee5;border-radius:10px;padding:11px 13px;color:#0b1f2e;font-size:0.84rem;font-family:'Inter',sans-serif;outline:none;width:100%;resize:vertical;min-height:96px"></textarea>
-        </div>
-        <button onclick="submitForm()" style="background:#0b1f2e;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:'Inter',sans-serif">Send Message →</button>
-      </div>
+      <div id="contact-form-area">${formSubmitted ? renderFormSuccess() : renderFormFields()}</div>
     </div>
   </section>`;
 }
@@ -315,31 +330,65 @@ function contactLeftCol(){
     <span style="font-size:0.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#0d9e5c;margin-bottom:10px;display:block">Get in Touch</span>
     <h2 style="font-size:clamp(2rem,3vw,2.8rem);font-weight:900;letter-spacing:-1.5px;color:#0b1f2e;margin-bottom:14px;line-height:1.05">Start Your<br/>Health Journey</h2>
     <p style="color:#5a7a68;line-height:1.8;margin-bottom:32px;font-size:0.93rem;max-width:360px">Ready to take a proactive approach to your health? Our clinical team will design a personalized plan built around your goals.</p>
-    ${infos.map(info=>`<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+    ${infos.map(info => `<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
       <div style="width:38px;height:38px;background:rgba(255,255,255,0.85);border:1.5px solid #b6e8cc;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><div style="width:6px;height:6px;background:#0d9e5c;border-radius:50%"></div></div>
       <div><div style="font-size:0.63rem;color:#5a7a68;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;margin-bottom:1px">${info.label}</div><div style="font-size:0.88rem;color:#0b1f2e;font-weight:600">${info.value}</div></div>
     </div>`).join("")}
   </div>`;
 }
 
+function renderFormFields(){
+  return `<div style="background:rgba(255,255,255,0.85);border:1.5px solid rgba(200,235,215,.8);border-radius:24px;padding:34px;display:flex;flex-direction:column;gap:13px;backdrop-filter:blur(16px);box-shadow:0 8px 40px rgba(13,158,92,.08)">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" class="grid-2">
+      ${["First Name","Last Name"].map(l => `<div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:0.66rem;font-weight:700;color:#5a7a68;letter-spacing:0.4px;text-transform:uppercase">${l}</label>
+        <input placeholder="${l==="First Name"?"John":"Doe"}" style="background-color:rgba(255,255,255,0.8);border:1.5px solid #ddeee5;border-radius:10px;padding:11px 13px;color:#0b1f2e;font-size:0.84rem;outline:none;width:100%"/>
+      </div>`).join("")}
+    </div>
+    ${["Email","Phone"].map(l => `<div style="display:flex;flex-direction:column;gap:5px">
+      <label style="font-size:0.66rem;font-weight:700;color:#5a7a68;letter-spacing:0.4px;text-transform:uppercase">${l}</label>
+      <input placeholder="${l==="Email"?"john@email.com":"+1 (000) 000-0000"}" style="background-color:rgba(255,255,255,0.8);border:1.5px solid #ddeee5;border-radius:10px;padding:11px 13px;color:#0b1f2e;font-size:0.84rem;outline:none;width:100%"/>
+    </div>`).join("")}
+    <div style="display:flex;flex-direction:column;gap:5px">
+      <label style="font-size:0.66rem;font-weight:700;color:#5a7a68;letter-spacing:0.4px;text-transform:uppercase">Message</label>
+      <textarea placeholder="Tell us about your health goals..." style="background-color:rgba(255,255,255,0.8);border:1.5px solid #ddeee5;border-radius:10px;padding:11px 13px;color:#0b1f2e;font-size:0.84rem;outline:none;width:100%;resize:vertical;min-height:96px"></textarea>
+    </div>
+    <button onclick="submitForm()" style="background:#0b1f2e;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:700;font-size:0.88rem;cursor:pointer">Send Message →</button>
+  </div>`;
+}
+
+function renderFormSuccess(){
+  return `<div style="background:rgba(255,255,255,0.85);border:1.5px solid rgba(200,235,215,.8);border-radius:24px;padding:60px;text-align:center;backdrop-filter:blur(16px)">
+    <div style="width:64px;height:64px;background:#e6f7ee;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">${checkIcon(28)}</div>
+    <h3 style="font-size:1.3rem;font-weight:800;color:#0b1f2e;margin-bottom:8px">Message Sent!</h3>
+    <p style="color:#5a7a68;font-size:0.9rem">Thank you! Our team will get back to you shortly.</p>
+  </div>`;
+}
+
+function submitForm(){
+  formSubmitted = true;
+  const area = document.getElementById("contact-form-area");
+  if (area) area.innerHTML = renderFormSuccess();
+}
+
+// ═══════════ FOOTER ═══════════
 function renderFooter(){
   return `<footer class="footer-wrap" style="background:#0b1f2e;padding:36px 60px;display:flex;align-items:center;justify-content:space-between">
-    <a href="#/" onclick="navigateTo('/');return false" style="font-size:1rem;font-weight:700;color:#fff;text-decoration:none;cursor:pointer">Emmy<span style="color:#0d9e5c">Health</span> Total Care</a>
+    <a href="#/" onclick="navigateTo('/');return false" style="font-size:1rem;font-weight:700;color:#fff;cursor:pointer">Emmy<span style="color:#0d9e5c">Health</span> Total Care</a>
     <p style="color:rgba(255,255,255,0.3);font-size:0.74rem;margin:0">© 2026 Emmy Health Total Care. All rights reserved.</p>
     <div style="display:flex;gap:22px">
-      ${["Home","Services","Contact"].map(link=>`<a href="#${link.toLowerCase()}" onclick="smoothTo('${link.toLowerCase()==='home'?'home':link.toLowerCase()}');return false" class="footer-link" style="color:rgba(255,255,255,0.35);font-size:0.74rem;text-decoration:none;cursor:pointer;transition:color 0.2s">${link}</a>`).join("")}
+      ${["Home","Services","Contact"].map(link => `<a href="#${link.toLowerCase()}" onclick="smoothTo('${link.toLowerCase()}');return false" class="footer-link" style="color:rgba(255,255,255,0.35);font-size:0.74rem;cursor:pointer;transition:color 0.2s">${link}</a>`).join("")}
     </div>
   </footer>`;
 }
 
 // ═══════════ SERVICE PAGE ═══════════
 function renderServicePage(svc){
-  const idx=servicePages.findIndex(s=>s.slug===svc.slug);
-  const prev=idx>0?servicePages[idx-1]:null;
-  const next=idx<servicePages.length-1?servicePages[idx+1]:null;
+  const idx = servicePages.findIndex(s => s.slug === svc.slug);
+  const prev = idx > 0 ? servicePages[idx-1] : null;
+  const next = idx < servicePages.length-1 ? servicePages[idx+1] : null;
 
   return `<div style="background:#fff">
-    <!-- Hero -->
     <section class="sec-pad sp-hero" style="background:#f2faf6;padding:160px 60px 80px;position:relative;overflow:hidden">
       <div style="position:absolute;inset:0;z-index:0">
         <img src="${svc.heroImage}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:center top;opacity:0.1;mix-blend-mode:multiply"/>
@@ -348,23 +397,22 @@ function renderServicePage(svc){
       <div style="position:absolute;right:-180px;top:20%;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(15,190,106,0.07) 0%,transparent 70%);pointer-events:none"></div>
       <div style="max-width:960px;margin:0 auto;position:relative;z-index:2">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:24px;font-size:0.75rem;color:#5a7a68">
-          <a href="#/" onclick="navigateTo('/');return false" style="color:#5a7a68;text-decoration:none;cursor:pointer">Home</a>
-          <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="9 18 15 12 9 6"/></svg>
+          <a href="#/" onclick="navigateTo('/');return false" style="color:#5a7a68;cursor:pointer">Home</a>
+          ${chevronRight(12)}
           <span style="color:#0d9e5c;font-weight:600">${svc.title}</span>
         </div>
         <button onclick="navigateTo('/')" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:#5a7a68;font-size:0.8rem;font-weight:600;cursor:pointer;padding:0;margin-bottom:36px;font-family:'Inter',sans-serif">
-          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Back to All Services
+          ${arrowLeft(16)} Back to All Services
         </button>
         <span style="font-size:0.68rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#0d9e5c;display:block;margin-bottom:14px">${svc.heroTagline}</span>
         <h1 style="font-size:clamp(2.6rem,5.5vw,4.2rem);font-weight:900;letter-spacing:-2.5px;color:#0b1f2e;line-height:1.06;margin-bottom:20px">${svc.title}</h1>
         <p style="font-size:1.08rem;color:#5a7a68;line-height:1.75;max-width:600px;margin-bottom:36px">${svc.subtitle}</p>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${svc.pills.map(p=>`<span style="background:rgba(255,255,255,0.45);color:#0d9e5c;border:1px solid rgba(182,232,204,0.6);padding:5px 14px;border-radius:100px;font-size:0.72rem;font-weight:600">${p}</span>`).join("")}
+          ${svc.pills.map(p => `<span style="background:rgba(255,255,255,0.45);color:#0d9e5c;border:1px solid rgba(182,232,204,0.6);padding:5px 14px;border-radius:100px;font-size:0.72rem;font-weight:600">${p}</span>`).join("")}
         </div>
       </div>
     </section>
 
-    <!-- Sections -->
     <section class="sec-pad sp-section" style="padding:80px 60px">
       <div style="max-width:960px;margin:0 auto">
         <div style="background:#e8f8ef;border-left:4px solid #0d9e5c;border-radius:0 18px 18px 0;padding:28px 32px;margin-bottom:40px">
@@ -372,17 +420,16 @@ function renderServicePage(svc){
           <p style="font-size:1.02rem;color:#0f1e17;line-height:1.8;margin:0">${svc.goal}</p>
         </div>
         <div style="display:flex;flex-direction:column;gap:20px">
-          ${svc.sections.map(section=>`<div style="background:#fff;border:1.5px solid #ddeee5;border-radius:20px;padding:24px 24px 20px;box-shadow:0 4px 24px rgba(13,158,92,0.06)">
+          ${svc.sections.map(section => `<div style="background:#fff;border:1.5px solid #ddeee5;border-radius:20px;padding:24px 24px 20px;box-shadow:0 4px 24px rgba(13,158,92,0.06)">
             <h3 style="font-size:0.75rem;font-weight:700;color:#0b1f2e;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid #ddeee5">${section.title}</h3>
             <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;padding:0;margin:0">
-              ${section.items.map(item=>`<li style="font-size:0.88rem;color:#5a7a68;line-height:1.6;padding-left:18px;position:relative"><span style="position:absolute;left:0;top:9px;width:5px;height:5px;background:#0d9e5c;border-radius:50%;opacity:0.75"></span>${item}</li>`).join("")}
+              ${section.items.map(item => `<li style="font-size:0.88rem;color:#5a7a68;line-height:1.6;padding-left:18px;position:relative"><span style="position:absolute;left:0;top:9px;width:5px;height:5px;background:#0d9e5c;border-radius:50%;opacity:0.75"></span>${item}</li>`).join("")}
             </ul>
           </div>`).join("")}
         </div>
       </div>
     </section>
 
-    <!-- Features -->
     <section class="sec-pad sp-section" style="padding:80px 60px;background:linear-gradient(160deg,#f0faf4 0%,#e4f5ec 100%)">
       <div style="max-width:960px;margin:0 auto">
         <div style="text-align:center;margin-bottom:48px">
@@ -390,10 +437,8 @@ function renderServicePage(svc){
           <h2 style="font-size:clamp(1.6rem,3vw,2.4rem);font-weight:900;letter-spacing:-1px;color:#0b1f2e">The Emmy Health Difference</h2>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="grid-2">
-          ${svc.features.map(f=>`<div style="background:rgba(255,255,255,0.65);border:1.5px solid #ddeee5;border-radius:18px;padding:22px 20px;box-shadow:0 4px 24px rgba(13,158,92,0.06);backdrop-filter:blur(16px)">
-            <div style="width:40px;height:40px;background:#e6f7ee;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
-              <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#0d9e5c;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
+          ${svc.features.map(f => `<div style="background:rgba(255,255,255,0.65);border:1.5px solid #ddeee5;border-radius:18px;padding:22px 20px;box-shadow:0 4px 24px rgba(13,158,92,0.06);backdrop-filter:blur(16px)">
+            <div style="width:40px;height:40px;background:#e6f7ee;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">${checkIcon(18)}</div>
             <h4 style="font-size:0.88rem;font-weight:700;color:#0b1f2e;margin-bottom:6px">${f.title}</h4>
             <p style="font-size:0.82rem;color:#5a7a68;line-height:1.65">${f.description}</p>
           </div>`).join("")}
@@ -401,28 +446,26 @@ function renderServicePage(svc){
       </div>
     </section>
 
-    <!-- CTA -->
     <section class="sec-pad sp-section" style="padding:80px 60px;text-align:center">
       <div style="max-width:640px;margin:0 auto">
         <h2 style="font-size:clamp(1.6rem,3vw,2.4rem);font-weight:900;letter-spacing:-1px;color:#0b1f2e;margin-bottom:12px">Ready to Get Started?</h2>
         <p style="color:#5a7a68;font-size:0.95rem;line-height:1.7;max-width:480px;margin:0 auto 28px">Book a consultation with our clinical team and discover how we can transform your health.</p>
-        <button onclick="navigateTo('/');setTimeout(function(){var el=document.getElementById('contact');if(el)el.scrollIntoView({behavior:'smooth'})},200)" class="cta-primary" style="background:#0fbe6a;color:#000;padding:14px 36px;border-radius:100px;font-weight:700;font-size:0.9rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(15,190,106,0.3)">
-          Book Consultation <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <button onclick="navigateTo('/');setTimeout(function(){var el=document.getElementById('contact');if(el)el.scrollIntoView({behavior:'smooth'})},250)" class="cta-primary" style="background:#0fbe6a;color:#000;padding:14px 36px;border-radius:100px;font-weight:700;font-size:0.9rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(15,190,106,0.3)">
+          Book Consultation ${arrowRight(18, 2.5)}
         </button>
       </div>
     </section>
 
-    <!-- Prev/Next -->
     <section class="sec-pad" style="padding:0 60px 60px">
-      <div style="max-width:960px;margin:0 auto;display:grid;grid-template-columns:${prev&&next?"1fr 1fr":"1fr"};gap:14px" class="${prev&&next?"grid-2":""}">
-        ${prev?`<div class="prev-next" onclick="navigateTo('/services/${prev.slug}')" style="background:#f8fcfa;border:1.5px solid #ddeee5;border-radius:16px;padding:18px 20px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all 0.2s">
-          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#0d9e5c;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      <div style="max-width:960px;margin:0 auto;display:grid;grid-template-columns:${prev && next ? "1fr 1fr" : "1fr"};gap:14px" class="${prev && next ? "grid-2" : ""}">
+        ${prev ? `<div class="prev-next" onclick="navigateTo('/services/${prev.slug}')" style="background:#f8fcfa;border:1.5px solid #ddeee5;border-radius:16px;padding:18px 20px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all 0.2s">
+          <span style="color:#0d9e5c;flex-shrink:0">${arrowLeft(16)}</span>
           <div><div style="font-size:0.65rem;color:#5a7a68;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px">Previous</div><div style="font-size:0.82rem;font-weight:700;color:#0b1f2e">${prev.title}</div></div>
-        </div>`:""}
-        ${next?`<div class="prev-next" onclick="navigateTo('/services/${next.slug}')" style="background:#f8fcfa;border:1.5px solid #ddeee5;border-radius:16px;padding:18px 20px;cursor:pointer;display:flex;align-items:center;gap:12px;justify-content:flex-end;text-align:right;transition:all 0.2s">
+        </div>` : ""}
+        ${next ? `<div class="prev-next" onclick="navigateTo('/services/${next.slug}')" style="background:#f8fcfa;border:1.5px solid #ddeee5;border-radius:16px;padding:18px 20px;cursor:pointer;display:flex;align-items:center;gap:12px;justify-content:flex-end;text-align:right;transition:all 0.2s">
           <div><div style="font-size:0.65rem;color:#5a7a68;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px">Next</div><div style="font-size:0.82rem;font-weight:700;color:#0b1f2e">${next.title}</div></div>
-          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#0d9e5c;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </div>`:""}
+          <span style="color:#0d9e5c;flex-shrink:0">${arrowRight(16)}</span>
+        </div>` : ""}
       </div>
     </section>
 
@@ -430,13 +473,8 @@ function renderServicePage(svc){
   </div>`;
 }
 
-// ═══════════ ACTIONS ═══════════
-function setTab(key){activeTab=key;openCard=null;render();smoothTo("services")}
-function toggleCard(id){openCard=openCard===id?null:id;render()}
-function submitForm(){formSubmitted=true;render()}
-
 // ═══════════ INIT ═══════════
-render();
+renderPage();
 </script>
 </body>
 </html>
